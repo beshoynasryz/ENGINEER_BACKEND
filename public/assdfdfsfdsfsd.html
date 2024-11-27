@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Application</title>
+    <style>
+        #messages {
+            border: 1px solid #ccc;
+            height: 300px;
+            overflow-y: scroll;
+            margin-bottom: 10px;
+        }
+        #messageInput {
+            width: 80%;
+        }
+        #sendMessageBtn {
+            width: 18%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chat Application</h1>
+    <div>
+        <input type="text" id="userIdInput" placeholder="Enter your user ID">
+        <input type="text" id="chatPartnerIdInput" placeholder="Enter chat partner ID">
+        <button id="joinChatBtn">Join Chat</button>
+    </div>
+    <div id="messages"></div>
+    <div>
+        <input type="text" id="messageInput" placeholder="Type your message here">
+        <button id="sendMessageBtn">Send Message</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.min.js"></script>
+    <script>
+        const socket = io("http://localhost:3000");
+
+        document.getElementById('joinChatBtn').addEventListener('click', () => {
+            const userId = document.getElementById('userIdInput').value;
+            const chatPartnerId = document.getElementById('chatPartnerIdInput').value;
+            if (userId && chatPartnerId) {
+                const roomId = [userId, chatPartnerId].sort().join('-');
+                socket.emit('joinPrivateChat', { userId1: userId, userId2: chatPartnerId });
+                console.log(`Joined room: ${roomId}`);
+            }
+        });
+
+        document.getElementById('sendMessageBtn').addEventListener('click', () => {
+            const userId = document.getElementById('userIdInput').value;
+            const chatPartnerId = document.getElementById('chatPartnerIdInput').value;
+            const message = document.getElementById('messageInput').value;
+            if (userId && chatPartnerId && message) {
+                const roomId = [userId, chatPartnerId].sort().join('-');
+                const messageData = {
+                    roomId,
+                    senderId: userId,
+                    message_text: message,
+                    message_type: 'text',
+                    status: 'sent'
+                };
+                socket.emit('sendMessage', messageData);
+                document.getElementById('messageInput').value = '';
+            }
+        });
+
+        socket.on('receiveMessage', (data) => {
+            const messagesDiv = document.getElementById('messages');
+            const messageElement = document.createElement('div');
+            messageElement.textContent = `${data.senderId}: ${data.message_text}`;
+            messagesDiv.appendChild(messageElement);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll to bottom
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Disconnected from server');
+        });
+    </script>
+</body>
+</html>

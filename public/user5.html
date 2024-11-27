@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User 5 Chat</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    #chatContainer {
+      border: 1px solid #ddd;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    #messages {
+      border: 1px solid #eee;
+      height: 200px;
+      overflow-y: scroll;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    #messageInput {
+      width: calc(100% - 90px);
+      padding: 10px;
+    }
+    #sendMessage {
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="chatContainer">
+    <h3>User 5 Chat</h3>
+    <div id="messages"></div>
+    <input type="text" id="messageInput" placeholder="Type your message here...">
+    <button id="sendMessage">Send</button>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    // Replace with actual user IDs
+    const userId = '5'; // User ID for User 5
+    const receiverId = '4'; // User ID for User 4
+
+    // Notify server of user's online status
+    socket.emit('userOnline', { userId });
+
+    // Join the chat room
+    socket.emit('joinPrivateChat', { userId1: userId, userId2: receiverId });
+
+    // Send message
+    document.getElementById('sendMessage').addEventListener('click', () => {
+      const messageText = document.getElementById('messageInput').value;
+      if (messageText) {
+        socket.emit('sendMessage', {
+          senderId: userId,
+          message_text: messageText,
+          message_type: 'text',
+          roomId: [userId, receiverId].sort().join('-')
+        });
+        document.getElementById('messageInput').value = '';
+      }
+    });
+
+    // Receive message
+    socket.on('receiveMessage', (data) => {
+      const messagesDiv = document.getElementById('messages');
+      const messageElement = document.createElement('div');
+      messageElement.textContent = `User ${data.senderId}: ${data.message_text}`;
+      messagesDiv.appendChild(messageElement);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
+  </script>
+</body>
+</html>
